@@ -35,7 +35,7 @@ app.use('/api',(req,res,next) => {
     next();
   }
   catch (e) {
-    res.json({success: false, message: 'Du måste vara inloggad för att genomföra åtgärden'});
+    res.json({success: false, message: 'Du måste vara inloggad för att genomföra åtgärden.'});
   }
 });
 app.use('/api', stats);
