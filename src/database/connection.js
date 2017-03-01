@@ -17,7 +17,7 @@ mongoose.Promise = Promise;
 //     const address = `mongodb://${url}/${database}`;
 //     if (!(_internalConnectionPool[address])) {
 //       try {
-//         const conn = mongoose.connect(address, opts);
+//         const conn = mongoose.createConnection(address, opts);
 //         conn.on("open", function () {
 //           console.log('Opened')
 //           _internalConnectionPool[address] = conn;
