@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const Assistant = require('../models/connectModels');
+const Assistant = require('../models/assistant');
 const mongoose = require('mongoose');
 
 // Gets stats from games for player pages.
@@ -21,16 +21,9 @@ router.get('/playerStats/game/:playerID',(req,res,next)=>{
   {$match:{'player._id':mongoose.Types.ObjectId(req.params.playerID)}},
   {$group:{_id:'stats',games:{$sum:{$cond:[{$gt:['$player.minutes.total',0]},1,0]}},gamesStarted:{$sum:{$cond:[{$and:[{$gt:['$player.minutes.total',0]},{$eq:['$player.minutes.in',0]}]},1,0]}},gamesAsSub:{$sum:{$cond:[{$and:[{$gt:['$player.minutes.total',0]},{$ne:['$player.minutes.in',0]}]},1,0]}},goals:{$sum:'$player.goals'},shots:{$sum:'$player.shots'},assists:{$sum:'$player.assists'},yellow:{$sum:'$player.yellow'},red:{$sum:'$player.red'},name:{$first:'$player.name'},totalMinutes:{$sum:'$player.minutes.total'}}},
   {$project:{stats:1,name:1,games:1,gamesStarted:1,gamesAsSub:1,goals:1,shots:1,assists:1,yellow:1,red:1,totalMinutes:1,goalsAvg:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$goals', '$games']}]},shotsAvg:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$shots', '$games']}]},minutesPerGame:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$totalMinutes', '$games']}]},minutesPerGoal:{$cond:[{$eq:[ '$goals', 0 ]},'N/A',{$divide:['$totalMinutes', '$goals']}]},goalOnShotsAvg:{$cond:[{$eq:[ '$goals', 0 ]},0,{$divide:['$goals', '$shots']}]}}}
-  ],
-  (err,thePlayer)=>{
-    if (err){
-      return res.status(500).json({success:false,message: err.message});
-    }
-    else {
-      // console.log(thePlayer);
-      res.status(200).json({success:true, playerStats:thePlayer});
-    }
-  });
+  ]).lean().exec()
+    .then( player => res.status(200).json({success:true, playerStats:player}))
+    .catch( err => res.status(500).json({success:false,message: err.message}));
 });
 
 // Gets stats from training for player pages.
@@ -46,15 +39,9 @@ router.get('/playerStats/training/:playerID/',(req,res,next)=>{
   {$project:{trainings:1, attending:{$size:'$trainings.attending'}}},
   {$match:{'attending':{$gte:1}}},
   {$project:{attending:{$in:[req.params.playerID,'$trainings.attending']}}}
-  ],
-  (err,trainer)=>{
-    if (err){
-      return res.status(500).json({success:false, message: err.message});
-    }
-    else {
-      res.status(200).json({success:true, playerStats:trainer});
-    }
-  });
+  ]).lean().exec()
+    .then( trainer => res.status(200).json({success:true, playerStats:trainer}))
+    .catch( err => res.status(500).json({success:false, message: err.message}));
 });
 
 // Gets stats from games for team page.
@@ -81,14 +68,9 @@ router.get('/teamStats/:userID/:sortOn',(req,res,next)=>{
   {$project:{club:1,'games.goals':1,'games.shots':1,'games.corners':1,'games.yellow':1,'games.red':1}},
   {$group:{_id:'statsForTeam',count:{$sum:1},club:{$first:'$club'},totalGoalsFor:{$sum:'$games.goals.for'},totalGoalsAgainst:{$sum:'$games.goals.against'},totalShotsFor:{$sum:'$games.shots.for'},totalShotsAgainst:{$sum:'$games.shots.against'},avgGoalsFor:{$avg:'$games.goals.for'},avgGoalsAgainst:{$avg:'$games.goals.against'},avgShotsFor:{$avg:'$games.shots.for'},avgShotsAgainst:{$avg:'$games.shots.against'},avgCornerFor:{$avg:'$games.corners.for'},avgCornerAgainst:{$avg:'$games.corners.against'},avgYellowFor:{$avg:'$games.yellow.for'},avgRedFor:{$avg:'$games.red.for'}}},
   {$project:{club:1,count:1,totalGoalsFor:1,totalGoalsAgainst:1,avgGoalsFor:1,avgGoalsAgainst:1,avgShotsFor:1,avgShotsAgainst:1,avgCornerFor:1,avgCornerAgainst:1,avgYellowFor:1,avgRedFor:1,shotConversionFor:{$cond:[{$eq:[ '$totalShotsFor', 0 ]},0,{$divide:['$totalGoalsFor', '$totalShotsFor']}]},shotConversionAgainst:{$cond:[{$eq:[ '$totalShotsAgainst', 0 ]},0,{$divide:['$totalGoalsAgainst', '$totalShotsAgainst']}]}}}
-  ],
-  (err,team) => {
-    if (err) {
-      return res.status(500).json({success:false,message: err.message});
-    } else {
-      res.status(200).json({success:true,team:team});
-    }
-  });
+  ]).lean().exec()
+    .then( team => res.status(200).json({success:true,team:team}))
+    .catch( err => res.status(500).json({success:false,message: err.message}));
 });
 
 module.exports = router;

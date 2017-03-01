@@ -89,7 +89,6 @@ LoginSchema.static('inProgress', async function (key) {
   return (login && login.inProgress);
 });
 
-// module.exports = LoginSchema;
 const LoginModel = mongoose.model('Login', LoginSchema);
 
 module.exports = LoginModel;

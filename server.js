@@ -27,17 +27,17 @@ app.use(validator());
 // Sets up routes
 app.use('/api/authenticate', users);
 // Checks for access to api
-// app.use('/api',(req,res,next) => {
-//   const token = bearer(req);
-//   try {
-//     const decoded = jwt.verify(token,process.env.SECRET);
-//     res.locals.decoded = decoded;
-//     next();
-//   }
-//   catch (e) {
-//     res.status(401).json({success: false, message: 'Du måste vara inloggad för att genomföra åtgärden.'});
-//   }
-// });
+app.use('/api',(req,res,next) => {
+  const token = bearer(req);
+  try {
+    const decoded = jwt.verify(token,process.env.SECRET);
+    res.locals.decoded = decoded;
+    next();
+  }
+  catch (e) {
+    res.status(401).json({success: false, message: 'Du måste vara inloggad för att genomföra åtgärden.'});
+  }
+});
 app.use('/api', stats);
 app.use('/api/games', games);
 app.use('/api/trainings', trainings);

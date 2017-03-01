@@ -1,49 +1,13 @@
 'use strict';
 const mongoose = require('mongoose');
+const {serverUrl,database} = require('../settings');
 const Promise = require('bluebird');
 mongoose.Promise = Promise;
 
-// Connect to Mongo database
-// const _internalConnectionPool = {};
-
-// function connectToDatabase (url, database, options) {
-//   const opts = Object.assign({}, {
-//     server: {
-//       poolSize: 5
-//     }
-//   }, options);
-
-//   return new Promise(function (resolve, reject) {
-//     const address = `mongodb://${url}/${database}`;
-//     if (!(_internalConnectionPool[address])) {
-//       try {
-//         const conn = mongoose.createConnection(address, opts);
-//         conn.on("open", function () {
-//           console.log('Opened')
-//           _internalConnectionPool[address] = conn;
-//           resolve(_internalConnectionPool[address]);
-//         });
-
-//         conn.on("error", function (err) {
-//           console.error("MongoDB error: %s", err);
-//         });
-//       } catch (err) {
-//         reject(err);
-//       }
-//     } else {
-//       return resolve(_internalConnectionPool[address]);
-//     }
-//   });
-// }
-
-mongoose.connect('mongodb://localhost/assistant', (err)=>{
-  if (err) {
-    console.log('Failed connecting to database');
-  }
-  else {
-    console.log('Connected to database');
-  }
-});
+// Connect to database
+mongoose.connect(`mongodb://${serverUrl}/${database}`)
+.then(()=> console.log('Connected to database'))
+.catch( err => console.log('Failed connecting to database: ',err));
 
 // Close connection if server is shut down
 process.on('SIGINT', ()=> {
@@ -52,5 +16,3 @@ process.on('SIGINT', ()=> {
     process.exit(0);
   });
 });
-
-// module.exports = connectToDatabase;
