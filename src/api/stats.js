@@ -1,42 +1,8 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const Assistant = require('../models/assistant');
+const Assistant = require('../models/connectModels');
 const mongoose = require('mongoose');
-
-// Gets stats for specific game. Returns a game(subdocument).
-router.get('/gameStats/:gameID',(req,res,next)=>{
-  Assistant.aggregate(
-  {$unwind:'$games'},
-  {$match:{
-    'games._id': mongoose.Types.ObjectId(req.params.gameID)
-  }},
-  {$project:{
-    game:'$games'
-  }},
-  (err,game)=>{
-    if (err){
-      return res.status(500).json({message: err.message});
-    }
-    else {
-      res.json({game:game[0].game});
-    }
-  });
-});
-
-// Updates specific game. Returns the game.
-router.put('/gameStats',(req,res,next)=>{
-  let find = {'games._id':mongoose.Types.ObjectId(req.body._id)};
-  let update = {$set:{'games.$':req.body}};
-  Assistant.findOneAndUpdate(find,update,(err,game)=>{
-    if (err){
-      return res.status(500).json({message: err.message});
-    }
-    else {
-      res.json({game:game});
-    }
-  });
-});
 
 // Gets stats from games for player pages.
 // 1. Selects only the games where the player participates.
@@ -62,19 +28,19 @@ router.get('/playerStats/game/:playerID',(req,res,next)=>{
     }
     else {
       // console.log(thePlayer);
-      res.json({success:true, playerStats:thePlayer});
+      res.status(200).json({success:true, playerStats:thePlayer});
     }
   });
 });
 
-// Gets stats from traingin for player pages.
+// Gets stats from training for player pages.
 // 1. Only selects player subdocuments.
 // 2. Makes array of objects for every subdocuments.
 // 3. Matches only instances of desired player from array.
 // 4. Makes calculations from those stats.
 router.get('/playerStats/training/:playerID/',(req,res,next)=>{
   Assistant.aggregate([
-  {$match:{'_id':mongoose.Types.ObjectId(res.locals.decoded._id)}},
+  {$match:{'_id':mongoose.Types.ObjectId(res.locals.decoded.sub)}},
   {$unwind:'$trainings'},
   {$sort:{'trainings.date':1}},
   {$project:{trainings:1, attending:{$size:'$trainings.attending'}}},
@@ -86,7 +52,7 @@ router.get('/playerStats/training/:playerID/',(req,res,next)=>{
       return res.status(500).json({success:false, message: err.message});
     }
     else {
-      res.json({success:true, playerStats:trainer});
+      res.status(200).json({success:true, playerStats:trainer});
     }
   });
 });
@@ -120,7 +86,7 @@ router.get('/teamStats/:userID/:sortOn',(req,res,next)=>{
     if (err) {
       return res.status(500).json({success:false,message: err.message});
     } else {
-      res.json({success:true,team:team});
+      res.status(200).json({success:true,team:team});
     }
   });
 });

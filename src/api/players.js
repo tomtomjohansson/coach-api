@@ -1,34 +1,20 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const Assistant = require('../models/assistant');
-const mongoose = require('mongoose');
-
-// Finds all players of specific user.
-router.post('/',(req,res,next)=>{
-  Assistant.findOne({username:res.locals.decoded.username},(err,user)=>{
-    if (err){
-      return res.status(500).json({message: err.message});
-    }
-    else {
-      res.json({players:user.players});
-    }
-  });
-});
+const Assistant = require('../models/connectModels');
 
 // Adds subdocument with new player.
-router.post('/add',(req,res,next)=>{
+router.post('/',(req,res,next)=>{
   let player = {name:req.body.name,phone:req.body.phone};
   let update = {$push:{players:player}};
   let option = {new:true};
-  Assistant.findByIdAndUpdate(res.locals.decoded._id,update,option,(err,user)=>{
-    if (err){
-      return res.status(500).json({success: false, message: err.message});
-    }
-    else {
-      const players = user.players;
-      res.json({success: true, players: players, message:'Spelaren lades till'});
-    }
+  Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option)
+  .then( user => {
+    const players = user.players;
+    res.status(201).json({success: true, players: players, message:'Spelaren lades till'});
+  })
+  .catch(err => {
+    return res.status(500).json({success: false, message: err.message});
   });
 });
 
@@ -36,13 +22,12 @@ router.post('/add',(req,res,next)=>{
 router.delete('/:id',(req,res,next)=>{
   let id = req.params.id;
   let deleteItem = {$pull:{players:{_id: id}}};
-  Assistant.findByIdAndUpdate(res.locals.decoded._id,deleteItem,(err,user)=>{
-    if (err){
-      return res.status(500).json({success: false, message: err.message});
-    }
-    else {
-      res.json({success: true, message:'Spelaren raderades'});
-    }
+  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem)
+  .then( user => {
+    res.status(200).json({success: true, message:'Spelaren raderades'});
+  })
+  .catch( err => {
+    return res.status(500).json({success: false, message: err.message});
   });
 });
 

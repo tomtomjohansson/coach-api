@@ -1,23 +1,23 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const Assistant = require('../models/assistant');
+const Assistant = require('../models/connectModels');
 const mongoose = require('mongoose');
 
 router.get('/',(req,res,next)=>{
-  Assistant.findById(res.locals.decoded._id,(err,user)=>{
+  Assistant.findById(res.locals.decoded.sub,(err,user)=>{
     if (err){
       return res.status(500).json({sucess:false, message: err.message});
     }
     else {
-      res.json({success: true, trainings:user.trainings, message: 'Träningarna hämtades'});
+      res.status(200).json({success: true, trainings:user.trainings, message: 'Träningarna hämtades'});
     }
   });
 });
 
 // Adds subdocument with training
 router.post('/',(req,res,next)=>{
-  const user_id = res.locals.decoded._id;
+  const user_id = res.locals.decoded.sub;
   const training = req.body;
   const update = {$push:{trainings:training}};
   const option = {new:true};
@@ -27,7 +27,7 @@ router.post('/',(req,res,next)=>{
     }
     else {
       const {trainings} = user;
-      res.json({success:true, trainings, message: 'Träningen lades till'});
+      res.status(201).json({success:true, trainings, message: 'Träningen lades till'});
     }
   });
 });
@@ -43,7 +43,7 @@ router.put('/',(req,res,next)=>{
       return res.status(500).json({success: false, message: err.message});
     }
     else {
-      res.json({success:true, message: 'Träningen uppdaterades'});
+      res.status(200).json({success:true, message: 'Träningen uppdaterades'});
     }
   });
 });
@@ -52,12 +52,12 @@ router.put('/',(req,res,next)=>{
 router.delete('/:id',(req,res,next)=>{
   let id = req.params.id;
   let deleteItem = {$pull:{trainings:{_id: id}}};
-  Assistant.findByIdAndUpdate(res.locals.decoded._id,deleteItem,(err,user)=>{
+  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem,(err,user)=>{
     if (err){
       return res.status(500).json({success: false, message: err.message});
     }
     else {
-      res.json({success: true, message:'Träningen raderades'});
+      res.status(200).json({success: true, message:'Träningen raderades'});
     }
   });
 });

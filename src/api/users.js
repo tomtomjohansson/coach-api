@@ -1,8 +1,11 @@
 'use strict';
 const express = require('express');
 const router = express.Router();
-const Assistant = require('../models/assistant');
+// const Assistant = require('../models/connectModels');
 const passport = require('passport');
+const mongoose = require('mongoose');
+const Promise = require('bluebird');
+mongoose.Promise = Promise;
 
 // Gets request body from registration. Saves new user to database
 router.post('/register', function(req, res, next){
@@ -10,16 +13,16 @@ router.post('/register', function(req, res, next){
   if (!username || !password || !email || !club){
     return res.status(400).json({success: false, message: 'Var god fyll i alla fälten'});
   }
-  Assistant.count({username:username}, (err,c)=>{
-    if (err) {
-      return res.status(500).json({success: false, message: err.message});
-    } else {
-      if (c) {
+  Assistant.count({username:username})
+  .then( c => {
+    if (c) {
         return res.status(400).json({success: false, message: 'Användarnamnet är upptaget.'});
       } else {
         next();
       }
-    }
+  })
+  .catch( err => {
+    return res.status(500).json({success: false, message: err.message});
   });
 });
 
@@ -28,12 +31,10 @@ router.post('/register', function(req, res, next){
   var assistant = new Assistant();
   assistant = Object.assign(assistant,{username,club,email});
   assistant.setPassword(password);
-  assistant.save( (err,user) =>{
-    if (err){
-      return res.json({sucess:false});
-    } else {
-      var token = user.generateJWT();
-      return res.json({
+  assistant.save()
+  .then( user => {
+    var token = user.generateJWT();
+      return res.status(200).json({
         success: true,
         user: {
           username: user.username,
@@ -46,14 +47,16 @@ router.post('/register', function(req, res, next){
         games: user.games,
         token: token
       });
-    }
+  })
+  .catch( err => {
+    return res.status(500).json({sucess:false});
   });
 });
 
 // Logs in the user. Returns user and webtoken
 router.post('/login', function(req, res, next){
   if (!req.body.username || !req.body.password){
-    return res.status(400).json({success: false, message: 'Var god fyll i alla fälten'});
+    return res.status(401).json({success: false, message: 'Var god fyll i alla fälten'});
   }
   passport.authenticate('local', function(err, user, info){
     if (err){
@@ -61,7 +64,7 @@ router.post('/login', function(req, res, next){
     }
     if (user){
       var token = user.generateJWT();
-      return res.json({
+      return res.status(200).json({
         success: true,
         user: {
           username: user.username,

@@ -2,19 +2,34 @@
 const express = require('express');
 const router = express.Router();
 const Assistant = require('../models/assistant');
+const Login = require('../models/login');
 const mongoose = require('mongoose');
+// const db = require('../models/connectModels');
 
 // Gets all the games for specific user.
-router.get('/:id',(req,res,next)=>{
+// router.use('/', async (req,res,next) => {
+//   res.Assistant = await db();
+//   next();
+// });
+router.get('/:id', async (req,res,next) => {
   let id = req.params.id;
-  Assistant.findOne({username:id},(err,user)=>{
-    if (err){
-      return res.status(500).json({message: err.message});
-    }
-    else {
-      res.json({games:user.games});
-    }
-  });
+  try {
+    const user = await Assistant.findOne({username:id}).lean().exec();
+    return res.status(200).json({success: true, games:user.games})
+  } catch (err) {
+    return res.status(500).json({message: err.message});
+  }
+  
+  // .then( user => res.status(200).json({success: true, games:user.games}))
+  // .catch( err => res.status(500).json({success: false, message: err.message}));
+  // ,(err,user)=>{
+  //   if (err){
+  //     return res.status(500).json({message: err.message});
+  //   }
+  //   else {
+  //     res.status(200).json({games:user.games});
+  //   }
+  // });
 });
 
 router.post('/',(req,res,next)=>{
@@ -22,12 +37,12 @@ router.post('/',(req,res,next)=>{
   const game = {opponent,venue,date};
   const update = {$push:{games:game}};
   const option = {new:true};
-  Assistant.findByIdAndUpdate(res.locals.decoded._id,update,option,(err,user)=>{
+  res.Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option,(err,user)=>{
     if (err) {
       return res.status(500).json({success: false, message: err.message});
     } else {
       const {games} = user;
-      res.json({success:true, games, message: 'Matchen lades till'});
+      res.status(201).json({success:true, games, message: 'Matchen lades till'});
     }
   });
 });
@@ -48,7 +63,7 @@ router.put('/',(req,res,next)=>{
       const game = games.find( g => {
         return g._id.toString() === req.body.game._id.toString();
       });
-      res.json({success:true,game,message:'Matchen sparades som avslutad'});
+      res.status(200).json({success:true,game,message:'Matchen sparades som avslutad'});
     }
   });
 });
@@ -70,7 +85,7 @@ router.put('/sub',(req,res,next)=>{
       const game = games.find( g => {
         return g._id.toString() === req.body.game._id.toString();
       });
-      res.json({success:true,game,message:'Matchen sparades som avslutad'});
+      res.status(200).json({success:true,game,message:'Matchen sparades som avslutad'});
     }
   });
 });
@@ -91,7 +106,7 @@ router.put('/eleven',(req,res,next)=>{
       const game = games.find( g => {
         return g._id.toString() === req.body.game._id.toString();
       });
-      res.json({success:true,game,message:'Startelvan sparades'});
+      res.status(200).json({success:true,game,message:'Startelvan sparades'});
     }
   });
 });
@@ -103,10 +118,10 @@ router.delete('/:id/:user',(req,res,next)=>{
   let deleteItem = {$pull:{games:{_id: id}}};
   Assistant.update({username:user},deleteItem,(err,game)=>{
     if (err){
-      return res.status(500).json({message: err.message});
+      return res.status(500).json({success:false, message: err.message});
     }
     else {
-      res.json({message:'Deleted game'});
+      res.status(200).json({success: true, message:'Deleted game'});
     }
   });
 });

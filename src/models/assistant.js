@@ -1,5 +1,7 @@
 'use strict';
 const mongoose = require('mongoose');
+const Promise = require('bluebird');
+mongoose.Promise = Promise;
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
@@ -29,7 +31,7 @@ const gameSchema = new mongoose.Schema({
 });
 
 // Main schema. Filled when a user creates an account.
-const assistantSchema = new mongoose.Schema({
+const AssistantSchema = new mongoose.Schema({
   username: {type: String, unique: true},
   hash: String,
   salt: String,
@@ -41,30 +43,29 @@ const assistantSchema = new mongoose.Schema({
 });
 
 // Gets the password when user signs up. Encrypts it.
-assistantSchema.methods.setPassword = function(password){
+AssistantSchema.methods.setPassword = function(password){
   this.salt = crypto.randomBytes(16).toString('hex');
   this.hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha1').toString('hex');
 };
 
 // Checks if password is valid at login.
-assistantSchema.methods.validPassword = function(password) {
+AssistantSchema.methods.validPassword = function(password) {
   const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha1').toString('hex');
   return this.hash === hash;
 };
 
 // Generates webtoken. Sets expiration time for 90 days.
-assistantSchema.methods.generateJWT = function() {
+AssistantSchema.methods.generateJWT = function() {
   const today = new Date();
   const exp = new Date(today);
   exp.setDate(today.getDate() + 365);
   return jwt.sign({
-    _id: this._id,
-    username: this.username,
+    sub: this._id,
     exp: parseInt(exp.getTime() / 1000),
     iss: 'LikeAPro'
   }, process.env.SECRET);
 };
 
-const assistantModel = mongoose.model('Assistant', assistantSchema);
+const assistantModel = mongoose.model('Assistant', AssistantSchema);
 
 module.exports = assistantModel;
