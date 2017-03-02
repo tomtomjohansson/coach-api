@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Assistant = require('../models/assistant');
+const Login = require('../models/login');
 const passport = require('passport');
 const mongoose = require('mongoose');
 const Promise = require('bluebird');
@@ -24,7 +25,7 @@ router.post('/register', function(req, res, next){
   .catch( err => res.status(500).json({success: false, message: err.message}));
 });
 
-router.post('/register', function(req, res, next){
+router.post('/register', (req, res, next) => {
   const {username,club,password,email} = req.body;
   var assistant = new Assistant();
   assistant = Object.assign(assistant,{username,club,email});
@@ -35,19 +36,42 @@ router.post('/register', function(req, res, next){
 });
 
 // Logs in the user. Returns user and webtoken
-router.post('/login', function(req, res, next){
-  if (!req.body.username || !req.body.password){
+router.post('/login', (req, res, next) => {
+  const {username, password} = req.body;
+  if (!username || !password){
     return res.status(401).json({success: false, message: 'Var god fyll i alla fälten'});
   }
+  res.locals.delayResponse = response => {
+    setTimeout(() => {
+      response();
+    }, 1000);
+  };
+  res.locals.identityKey = `${req.body.username}-${req.ip}`;
+  Login.inProgress(res.locals.identityKey)
+    .then( inProgress => inProgress ? res.locals.delayResponse(() => res.status(401).json({success:false, message: 'Ett login-försök pågår redan.'})) : next())
+    .catch( err => next(err));
+});
+
+router.post('/login', (req,res,next) => {
+  Login.canAuthenticate(res.locals.identityKey)
+    .then( isNotLocked => isNotLocked ? next() : res.locals.delayResponse(() => res.status(500).json({success:false,message:'Kontot är låst efter för många felaktiga försök att logga in. Var god försök igen senare.'})))
+    .catch( err => next(err));
+});
+
+router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
     if (err){
-      return res.json({success:false});
+      next(err);
     } else if (user){
-      return res.status(200).json(createUserObject(user));
+      Login.successfulLoginAttempt(res.locals.identityKey);
+      return res.locals.delayResponse( () => res.status(200).json(createUserObject(user)));
     } else {
-      return res.status(401).json({success:false, message: info.message});
+      Login.failedLoginAttempt(res.locals.identityKey);
+      return res.locals.delayResponse( () => res.status(401).json({success:false, message: info.message}));
     }
   })(req, res, next);
+  }, (err,req,res,next) => {
+    res.locals.delayResponse(() => res.status(500).json({sucess:false, message: err.message }));
 });
 
 

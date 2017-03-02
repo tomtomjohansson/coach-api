@@ -27,7 +27,7 @@ const gameSchema = new mongoose.Schema({
   corners: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
   yellow: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
   red: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
-  players: [{id:String,name:String,goals:{type:Number,'default':0},shots:{type:Number,'default':0},assists:{type:Number,'default':0},bonus:{type:Number,'default':0},yellow:{type:Number,'default':0},red:{type:Number,'default':0},minutes:{in:{type:Number,'default':0},out:{type:Number,'default':0},total:{type:Number,'default':0}}}]
+  players: [{name:String,position:String,goals:{type:Number,'default':0},shots:{type:Number,'default':0},assists:{type:Number,'default':0},bonus:{type:Number,'default':0},yellow:{type:Number,'default':0},red:{type:Number,'default':0},minutes:{in:{type:Number,'default':0},out:{type:Number,'default':0},total:{type:Number,'default':0}}}]
 });
 
 // Main schema. Filled when a user creates an account.
@@ -37,6 +37,7 @@ const AssistantSchema = new mongoose.Schema({
   salt: String,
   email: String,
   club: String,
+  teamColors: {primary:{type:String,default:'offWhite'},secondary:{type:String,default:'black'}},
   players: [playerSchema],
   games: [gameSchema],
   trainings: [trainingSchema]
