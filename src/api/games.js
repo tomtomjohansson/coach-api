@@ -3,16 +3,21 @@ const express = require('express');
 const router = express.Router();
 const Assistant = require('../models/assistant');
 const mongoose = require('mongoose');
+const {addGameSchema, substitutionSchema} = require('../validation/userValidation');
 
 // Gets all the games for specific user.
-router.get('/:id', (req,res,next) => {
-  let id = req.params.id;
-  Assistant.findOne({username:id}).lean().exec()
+router.get('/', (req,res,next) => {
+  Assistant.findById(res.locals.decoded.sub).lean().exec()
     .then( user => res.status(200).json({success: true, games:user.games}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
 });
 
 router.post('/',(req,res,next)=>{
+  req.checkBody(addGameSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(500).json({success:false,message:errors[0].msg});
+    }
   const {opponent,venue,date} = req.body;
   const game = {opponent,venue,date};
   const update = {$push:{games:game}};
@@ -32,6 +37,11 @@ router.put('/',(req,res,next)=>{
 });
 
 router.put('/sub',(req,res,next) => {
+  req.checkBody(substitutionSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(500).json({success:false,message:errors[0].msg});
+    }
   const {game,playerIn,playerOut,minute} = req.body;
   game.players.push(playerIn);
   game.players[game.players.length - 1].minutes = {in:minute,total:0,out:90};

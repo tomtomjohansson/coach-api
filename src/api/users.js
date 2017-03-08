@@ -7,6 +7,7 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const Promise = require('bluebird');
 mongoose.Promise = Promise;
+const {loginSchema,registrationSchema} = require('../validation/userValidation');
 
 // Gets request body from registration. Saves new user to database
 router.post('/register', function(req, res, next){
@@ -14,6 +15,11 @@ router.post('/register', function(req, res, next){
   if (!username || !password || !email || !club){
     return res.status(400).json({success: false, message: 'Var god fyll i alla fälten'});
   }
+  req.checkBody(registrationSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(401).json({success:false,message:errors[0].msg});
+    }
   Assistant.count({username:username})
   .then( c => {
     if (c) {
@@ -22,18 +28,21 @@ router.post('/register', function(req, res, next){
       next();
     }
   })
-  .catch( err => res.status(500).json({success: false, message: err.message}));
+  .catch( err => next(err));
 });
 
 router.post('/register', (req, res, next) => {
   const {username,club,password,email} = req.body;
-  var assistant = new Assistant();
-  assistant = Object.assign(assistant,{username,club,email});
-  assistant.setPassword(password);
-  assistant.save()
-  .then( user => res.status(200).json(createUserObject(user)))
-  .catch( err => res.status(500).json({sucess:false, message: err.message}));
+  res.locals.assistant = new Assistant();
+  res.locals.assistant = Object.assign(res.locals.assistant,{username,club,email});
+  res.locals.assistant.setPassword(password,next);
 });
+
+router.post('/register', (req, res, next) => {
+  res.locals.assistant.save()
+    .then( user => res.status(200).json(createUserObject(user)))
+    .catch( err => next(err));
+},(err,req,res,next) => res.status(500).json({sucess:false, message: err.message }));
 
 // Logs in the user. Returns user and webtoken
 router.post('/login', (req, res, next) => {
@@ -41,6 +50,19 @@ router.post('/login', (req, res, next) => {
   if (!username || !password){
     return res.status(401).json({success: false, message: 'Var god fyll i alla fälten'});
   }
+  req.checkBody(loginSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(401).json({success:false,message:errors[0].msg});
+    }
+  Assistant.count({username:username})
+    .then( c => {
+      if (!c) {
+        return res.status(401).json({success: false, message: 'Vi hittade inget konto med det användarnamnet.'});
+      }
+    })
+    .catch( err => next(err));
+
   res.locals.delayResponse = response => {
     setTimeout(() => {
       response();
@@ -82,7 +104,8 @@ function createUserObject(user){
       username: user.username,
       club: user.club,
       id: user._id,
-      email: user.email
+      email: user.email,
+      teamColors: user.teamColors
     },
     players: user.players,
     trainings: user.trainings,

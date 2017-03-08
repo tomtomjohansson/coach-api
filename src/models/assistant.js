@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const Promise = require('bluebird');
 mongoose.Promise = Promise;
-const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Schema for subdocuments. Instances created when users add players.
@@ -33,8 +33,11 @@ const gameSchema = new mongoose.Schema({
 // Main schema. Filled when a user creates an account.
 const AssistantSchema = new mongoose.Schema({
   username: {type: String, unique: true},
-  hash: String,
-  salt: String,
+  password: {
+    type: String,
+    required: true,
+    minlength: 8
+  },
   email: String,
   club: String,
   teamColors: {primary:{type:String,default:'offWhite'},secondary:{type:String,default:'black'}},
@@ -44,15 +47,18 @@ const AssistantSchema = new mongoose.Schema({
 });
 
 // Gets the password when user signs up. Encrypts it.
-AssistantSchema.methods.setPassword = function(password){
-  this.salt = crypto.randomBytes(16).toString('hex');
-  this.hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha1').toString('hex');
+AssistantSchema.methods.setPassword = function(password,next){
+  bcrypt.hash(password,14)
+    .then( hash => {
+      this.password = hash;
+      next();
+    })
+    .catch( err => next(err));
 };
 
 // Checks if password is valid at login.
 AssistantSchema.methods.validPassword = function(password) {
-  const hash = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha1').toString('hex');
-  return this.hash === hash;
+  return bcrypt.compare(password,this.password);
 };
 
 // Generates webtoken. Sets expiration time for 90 days.
@@ -62,7 +68,7 @@ AssistantSchema.methods.generateJWT = function() {
   exp.setDate(today.getDate() + 365);
   return jwt.sign({
     sub: this._id,
-    exp: parseInt(exp.getTime() / 1000),
+    exp: parseInt(exp.getTime() / 1000, 10),
     iss: 'LikeAPro'
   }, process.env.SECRET);
 };

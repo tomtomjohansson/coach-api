@@ -2,9 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const Assistant = require('../models/assistant');
+const {addPlayerSchema} = require('../validation/userValidation');
 
 // Adds subdocument with new player.
 router.post('/',(req,res,next)=>{
+  req.checkBody(addPlayerSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(500).json({success:false,message:errors[0].msg});
+    }
   let player = {name:req.body.name,phone:req.body.phone};
   let update = {$push:{players:player}};
   let option = {new:true};

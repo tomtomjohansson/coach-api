@@ -6,6 +6,9 @@ require('dotenv').config();
 const path = require('path');
 const parser = require('body-parser');
 const validator = require('express-validator');
+const compression = require('compression');
+const helmet = require('helmet');
+const scheduler = require('node-schedule');
 // Database & authentication
 require('./src/models/assistant');
 require('./src/database/connection');
@@ -21,8 +24,14 @@ const PORT = process.env.PORT || 3000;
 const jwt = require('jsonwebtoken');
 const bearer = require('parse-bearer-token');
 
+app.use(helmet());
 app.use(parser.json());
 app.use(validator());
+app.use(compression());
+
+var j = scheduler.scheduleJob({hour: 13, minute: 30, dayOfWeek: [1,2,3,4,5]}, function(){
+  console.log('Det är vardag och klockan är 13:30!');
+});
 
 // Sets up routes
 app.use('/api/authenticate', users);
@@ -42,6 +51,10 @@ app.use('/api', stats);
 app.use('/api/games', games);
 app.use('/api/trainings', trainings);
 app.use('/api/players', players);
+
+app.use((req, res, next) => {
+  res.status(404).json({success:false,message:"Servern kunde inte hitta önskad url."});
+});
 
 app.listen(PORT, err => {
   if (err){

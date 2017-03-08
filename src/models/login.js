@@ -28,9 +28,7 @@ const LoginSchema = new mongoose.Schema({
 });
 
 LoginSchema.static('canAuthenticate', async function (key) {
-  const login = await this.findOne({
-    identityKey: key
-  }).exec();
+  const login = await this.findOne({identityKey: key}).exec();
 
   if (!login || login.failedAttempts < 3) {
     return true;
@@ -44,14 +42,12 @@ LoginSchema.static('canAuthenticate', async function (key) {
   const query = {identityKey: key};
   const update = {inProgress:false};
   const options = {setDefaultsOnInsert:true,upsert:true};
-  await this.findOneAndUpdate(query,update,options).exec();
+  await this.findOneAndUpdate(query,update,options).lean().exec();
   return false;
 });
 
 LoginSchema.static('failedLoginAttempt', async function (key) {
-  const query = {
-    identityKey: key
-  };
+  const query = {identityKey: key};
   const update = {
     $inc: {
       failedAttempts: 1
@@ -63,27 +59,25 @@ LoginSchema.static('failedLoginAttempt', async function (key) {
     setDefaultsOnInsert: true,
     upsert: true
   };
-  return await this.findOneAndUpdate(query, update, options).exec();
+  return await this.findOneAndUpdate(query, update, options).lean().exec();
 });
 
 LoginSchema.static('successfulLoginAttempt', async function (key) {
-  const login = await this.findOne({
-    identityKey: key
-  }).exec();
+  const login = await this.findOne({identityKey: key}).exec();
   if (login) {
     return await login.remove();
   }
 });
 
 LoginSchema.static('inProgress', async function (key) {
-  const login = await this.findOne({identityKey: key}).exec();
+  const login = await this.findOne({identityKey: key}).lean().exec();
   const query = {identityKey: key};
   const update = {inProgress: true};
   const options = {
     setDefaultsOnInsert: true,
     upsert: true
   };
-  await this.findOneAndUpdate(query, update, options).exec();
+  await this.findOneAndUpdate(query, update, options).lean().exec();
   return (login && login.inProgress);
 });
 

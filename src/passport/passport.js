@@ -10,10 +10,9 @@ passport.use(new LocalStrategy((username, password, done) => {
     if (!user) {
       return done(null, false, { message: 'Vi hittade inget konto med det användarnamnet.' });
     }
-    if (!user.validPassword(password)) {
-      return done(null, false, { message: 'Felaktigt lösenord. Var god försök igen.' });
-    }
-    return done(null, user);
+    user.validPassword(password)
+      .then( valid => valid ? done(null, user) : done(null, false, { message: 'Felaktigt lösenord. Var god försök igen.' }))
+      .catch( err => done(err));
   })
   .catch((err) => done(err));
 }));

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Assistant = require('../models/assistant');
 const mongoose = require('mongoose');
+const {addTrainingSchema} = require('../validation/userValidation');
 
 router.get('/',(req,res,next)=>{
   Assistant.findById(res.locals.decoded.sub).lean().exec()
@@ -12,6 +13,11 @@ router.get('/',(req,res,next)=>{
 
 // Adds subdocument with training
 router.post('/',(req,res,next)=>{
+  req.checkBody(addTrainingSchema);
+    const errors = req.validationErrors();
+    if (errors) {
+      return res.status(500).json({success:false,message:errors[0].msg});
+    }
   const update = {$push:{trainings:req.body}};
   const option = {new:true};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option).lean().exec()
@@ -40,3 +46,34 @@ router.delete('/:id',(req,res,next)=>{
 });
 
 module.exports = router;
+
+// db.assistants.aggregate(
+// 	{$match:{username:'tysken'}},
+// 	{$unwind:'$trainings'},
+// 	{$sort:{'trainings.date':1}},
+// 	{$group:{
+// 		_id:'$_id',
+// 		'finished':{
+// 			$push:{
+// 				$cond:{
+// 					if:{$gte:[{$size:'$trainings.attending'},1]},
+// 					then:'$trainings',
+// 					else:"$noval"
+// 				}
+// 			}
+// 		},
+// 		'unfinished':{
+// 			$push:{
+// 				$cond:{
+// 					if:{$lte:[{$size:'$trainings.attending'},1]},
+// 					then:'$trainings',
+// 					else:"$noval"
+// 				}
+// 			}
+// 		}
+// 	}},
+// 	{$project:{
+// 		trainings:{$slice:['$finished',-5,5]},
+// 		upcoming:{$slice:['$unfinished',0,5]}
+// 	}}
+// ).pretty()
