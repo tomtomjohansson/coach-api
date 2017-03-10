@@ -13,9 +13,9 @@ router.post('/',(req,res,next)=>{
     }
   let player = {name:req.body.name,phone:req.body.phone};
   let update = {$push:{players:player}};
-  let option = {new:true};
+  let option = {new:true,projection:{players:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option).lean().exec()
-    .then( user => res.status(201).json({success: true, players: user.players, message:'Spelaren lades till'}))
+    .then( data => res.status(201).json({success: true, players: data.players, message:'Spelaren lades till'}))
     .catch(err => res.status(500).json({success: false, message: err.message}));
 });
 

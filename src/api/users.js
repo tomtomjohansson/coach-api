@@ -59,14 +59,18 @@ router.post('/login', (req, res, next) => {
     .then( c => {
       if (!c) {
         return res.status(401).json({success: false, message: 'Vi hittade inget konto med det användarnamnet.'});
+      } else {
+        next();
       }
     })
     .catch( err => next(err));
+});
 
+router.post('/login', (req,res,next) => {
   res.locals.delayResponse = response => {
     setTimeout(() => {
       response();
-    }, 1000);
+    }, 500);
   };
   res.locals.identityKey = `${req.body.username}-${req.ip}`;
   Login.inProgress(res.locals.identityKey)

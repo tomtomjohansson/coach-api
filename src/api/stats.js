@@ -14,6 +14,7 @@ const mongoose = require('mongoose');
 // 7. Final project. Calculates those instances from group-stage that needed further work.
 router.get('/playerStats/game/:playerID',(req,res,next)=>{
   Assistant.aggregate([
+  {$match:{_id:mongoose.Types.ObjectId(res.locals.decoded.sub)}},
   {$match:{'games.players._id':mongoose.Types.ObjectId(req.params.playerID)}},//Check if match ended
   {$unwind:'$games'},
   {$project:{'player':'$games.players'}},
@@ -33,6 +34,7 @@ router.get('/playerStats/game/:playerID',(req,res,next)=>{
 // 4. Makes calculations from those stats.
 router.get('/playerStats/training/:playerID/',(req,res,next)=>{
   Assistant.aggregate([
+  {$match:{_id:mongoose.Types.ObjectId(res.locals.decoded.sub)}},
   {$match:{'_id':mongoose.Types.ObjectId(res.locals.decoded.sub)}},
   {$unwind:'$trainings'},
   {$sort:{'trainings.date':1}},
@@ -74,3 +76,14 @@ router.get('/teamStats/:userID/:sortOn',(req,res,next)=>{
 });
 
 module.exports = router;
+
+// db.assistants.aggregate([
+//   {$match:{_id:ObjectId("58a5a255f56e33047e5922ff")}},
+//   {$match:{'games.players._id':ObjectId("58a5a2b8f56e33047e592301")}},//Check if match ended
+//   {$unwind:'$games'},
+//   {$project:{'player':'$games.players'}},
+//   {$unwind:'$player'},
+//   {$match:{'player._id':ObjectId("58a5a2b8f56e33047e592301")}},
+//   {$group:{_id:'stats',games:{$sum:{$cond:[{$gt:['$player.minutes.total',0]},1,0]}},gamesStarted:{$sum:{$cond:[{$and:[{$gt:['$player.minutes.total',0]},{$eq:['$player.minutes.in',0]}]},1,0]}},gamesAsSub:{$sum:{$cond:[{$and:[{$gt:['$player.minutes.total',0]},{$ne:['$player.minutes.in',0]}]},1,0]}},goals:{$sum:'$player.goals'},shots:{$sum:'$player.shots'},assists:{$sum:'$player.assists'},yellow:{$sum:'$player.yellow'},red:{$sum:'$player.red'},name:{$first:'$player.name'},totalMinutes:{$sum:'$player.minutes.total'}}},
+//   {$project:{stats:1,name:1,games:1,gamesStarted:1,gamesAsSub:1,goals:1,shots:1,assists:1,yellow:1,red:1,totalMinutes:1,goalsAvg:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$goals', '$games']}]},shotsAvg:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$shots', '$games']}]},minutesPerGame:{$cond:[{$eq:[ '$games', 0 ]},0,{$divide:['$totalMinutes', '$games']}]},minutesPerGoal:{$cond:[{$eq:[ '$goals', 0 ]},'N/A',{$divide:['$totalMinutes', '$goals']}]},goalOnShotsAvg:{$cond:[{$eq:[ '$goals', 0 ]},0,{$divide:['$goals', '$shots']}]}}}
+//   ],{explain:true})
