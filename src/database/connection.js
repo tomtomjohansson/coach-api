@@ -5,7 +5,7 @@ const Promise = require('bluebird');
 mongoose.Promise = Promise;
 
 // Connect to database
-mongoose.connect(process.env.NODE_ENV === 'development' ? devUrl : prodUrl)
+mongoose.connect(process.env.NODE_ENV !== 'production' ? devUrl : prodUrl)
 .then(()=> console.log('Connected to database'))
 .catch( err => console.log('Failed connecting to database: ',err));
 
