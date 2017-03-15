@@ -8,8 +8,8 @@ const parser = require('body-parser');
 const validator = require('express-validator');
 const compression = require('compression');
 const helmet = require('helmet');
-const scheduler = require('node-schedule');
 // Database & authentication
+process.env.NODE_ENV !== 'production' && require('./src/database/backupHandler');
 require('./src/models/assistant');
 require('./src/database/connection');
 require('./src/passport/passport');
@@ -28,10 +28,6 @@ app.use(helmet());
 app.use(parser.json());
 app.use(validator());
 app.use(compression());
-
-var j = scheduler.scheduleJob({hour: 13, minute: 30, dayOfWeek: [1,2,3,4,5]}, function(){
-  console.log('Det är vardag och klockan är 13:30!');
-});
 
 // Sets up routes
 app.use('/api/authenticate', users);

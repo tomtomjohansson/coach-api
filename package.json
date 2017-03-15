@@ -16,7 +16,6 @@
     "bluebird": "3.4.7",
     "body-parser": "^1.15.1",
     "compression": "1.6.2",
-    "dotenv": "4.0.0",
     "express": "^4.13.4",
     "express-jwt": "^3.4.0",
     "express-validator": "3.1.2",
@@ -27,11 +26,12 @@
     "node-schedule": "1.2.0",
     "parse-bearer-token": "0.0.1",
     "passport": "^0.3.2",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "shelljs": "0.7.7"
   },
   "devDependencies": {
     "babel-eslint": "7.1.1",
-    "eslint": "3.15.0",
-    "shelljs": "^0.3.0"
+    "dotenv": "4.0.0",
+    "eslint": "3.15.0"
   }
 }
