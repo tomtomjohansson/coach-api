@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const {addTrainingSchema} = require('../validation/userValidation');
 
 router.get('/',(req,res,next)=>{
-  Assistant.findById(res.locals.decoded.sub).lean().exec()
+  Assistant.findById(res.locals.decoded.sub,{},{select:{trainings:1}}).lean().exec()
     .then( user => res.status(200).json({success: true, trainings:user.trainings, message: 'Träningarna hämtades'}))
     .catch( err => res.status(500).json({sucess:false, message: err.message}));
 });
@@ -18,8 +18,8 @@ router.post('/',(req,res,next)=>{
     if (errors) {
       return res.status(500).json({success:false,message:errors[0].msg});
     }
-  const update = {$push:{trainings:req.body}};
-  const option = {new:true};
+  const update = {$push:{trainings:req.body},$set:{lastUpdate:Date.now()}};
+  const option = {new:true,select:{trainings:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option).lean().exec()
     .then( user => res.status(201).json({success:true, trainings: user.trainings, message: 'Träningen lades till'}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
@@ -29,8 +29,8 @@ router.post('/',(req,res,next)=>{
 router.put('/',(req,res,next)=>{
   req.body.training.attending = req.body.attending;
   let find = {'trainings._id':mongoose.Types.ObjectId(req.body.training._id)};
-  let update = {$set:{'trainings.$':req.body.training}};
-  let option = {new:true};
+  let update = {$set:{'trainings.$':req.body.training, lastUpdate:Date.now()}};
+  const option = {new:true,select:{trainings:1}};
   Assistant.findOneAndUpdate(find,update,option).lean().exec()
     .then( user => res.status(200).json({success:true, message: 'Träningen uppdaterades'}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
@@ -40,7 +40,8 @@ router.put('/',(req,res,next)=>{
 router.delete('/:id',(req,res,next)=>{
   let id = req.params.id;
   let deleteItem = {$pull:{trainings:{_id: id}}};
-  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem).lean().exec()
+  const option = {new:true,select:{trainings:1}};
+  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem,option).lean().exec()
     .then( user => res.status(200).json({success: true, message:'Träningen raderades'}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
 });

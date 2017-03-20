@@ -10,6 +10,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 // Database & authentication
 process.env.NODE_ENV !== 'production' && require('./src/database/backupHandler');
+require('./src/database/removeUnusedDocs');
 require('./src/models/assistant');
 require('./src/database/connection');
 require('./src/passport/passport');
@@ -47,9 +48,8 @@ app.use('/api', stats);
 app.use('/api/games', games);
 app.use('/api/trainings', trainings);
 app.use('/api/players', players);
-
 app.use((req, res, next) => {
-  res.status(404).json({success:false,message:"Servern kunde inte hitta önskad url."});
+  res.status(404).json({success:false,message:'Servern kunde inte hitta önskad url.'});
 });
 
 app.listen(PORT, err => {

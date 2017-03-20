@@ -7,7 +7,7 @@ const {addGameSchema, substitutionSchema} = require('../validation/userValidatio
 
 // Gets all the games for specific user.
 router.get('/', (req,res,next) => {
-  Assistant.findById(res.locals.decoded.sub).lean().exec()
+  Assistant.findById('58a5a255f56e33047e5922ff',{},{select:{games:1}}).lean().exec()
     .then( user => res.status(200).json({success: true, games:user.games}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
 });
@@ -20,8 +20,8 @@ router.post('/',(req,res,next)=>{
     }
   const {opponent,venue,date} = req.body;
   const game = {opponent,venue,date};
-  const update = {$push:{games:game}};
-  const option = {new:true};
+  const update = {$push:{games:game},$set:{lastUpdate:Date.now()}};
+  const option = {new:true, select:{games:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,update,option).lean().exec()
     .then( user => res.status(201).json({success:true, games: user.games , message: 'Matchen lades till'}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
@@ -62,8 +62,8 @@ router.put('/eleven',(req,res,next) => {
 
 router.put('*', (req,res,next) => {
   const find = {'games._id':mongoose.Types.ObjectId(req.body.game._id)};
-  const update = {$set:{'games.$':req.body.game}};
-  const option = {new:true};
+  const update = {$set:{'games.$':req.body.game,lastUpdate:Date.now()}};
+  const option = {new:true,select:{games:1}};
   Assistant.findOneAndUpdate(find,update,option).lean().exec()
     .then( user => {
       const game = user.games.find( g => g._id.toString() === req.body.game._id.toString());
@@ -76,6 +76,7 @@ router.put('*', (req,res,next) => {
 router.delete('/:id',(req,res,next)=>{
   let id = req.params.id;
   let deleteItem = {$pull:{games:{_id: id}}};
+  const option = {new:true,select:{games:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem).lean().exec()
     .then( user => res.status(200).json({success: true, message:'Deleted game'}))
     .catch( err => res.status(500).json({success:false, message: err.message}));

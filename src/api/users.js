@@ -33,8 +33,9 @@ router.post('/register', function(req, res, next){
 
 router.post('/register', (req, res, next) => {
   const {username,club,password,email} = req.body;
+  const lastUpdate = Date.now();
   res.locals.assistant = new Assistant();
-  res.locals.assistant = Object.assign(res.locals.assistant,{username,club,email});
+  res.locals.assistant = Object.assign(res.locals.assistant,{username,club,email,lastUpdate});
   res.locals.assistant.setPassword(password,next);
 });
 

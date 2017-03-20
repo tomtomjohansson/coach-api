@@ -40,6 +40,7 @@ const AssistantSchema = new mongoose.Schema({
   },
   email: String,
   club: String,
+  lastUpdate: Date,
   teamColors: {primary:{type:String,default:'offWhite'},secondary:{type:String,default:'black'}},
   players: [playerSchema],
   games: [gameSchema],
