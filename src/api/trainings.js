@@ -28,11 +28,15 @@ router.post('/',(req,res,next)=>{
 // Updates specific training. Returns training.
 router.put('/',(req,res,next)=>{
   req.body.training.attending = req.body.attending;
+  req.body.training.attendance = req.body.attendance;
   let find = {'trainings._id':mongoose.Types.ObjectId(req.body.training._id)};
   let update = {$set:{'trainings.$':req.body.training, lastUpdate:Date.now()}};
   const option = {new:true,select:{trainings:1}};
   Assistant.findOneAndUpdate(find,update,option).lean().exec()
-    .then( user => res.status(200).json({success:true, message: 'Träningen uppdaterades'}))
+    .then( user => {
+    const training = user.trainings.find( t => t._id.toString() === req.body.training._id.toString());
+    res.status(200).json({success:true,training, message: 'Träningen uppdaterades'})
+    })
     .catch( err => res.status(500).json({success: false, message: err.message}));
 });
 

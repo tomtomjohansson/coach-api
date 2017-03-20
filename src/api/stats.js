@@ -53,7 +53,7 @@ router.get('/playerStats/training/:playerID/',(req,res,next)=>{
 // 4. Only select games that have ended (not forthcoming games).
 // 5. Specifies which keys are interesting.
 // 6. Grouping. Selects all the stats desired and makes calculations.
-router.get('/teamStats/:userID/:sortOn',(req,res,next)=>{
+router.get('/teamStats/:sortOn',(req,res,next)=>{
   let sorted = {};
   if (req.params.sortOn === 'all') {
     sorted = {$match:{'games.ended':true}};
@@ -63,15 +63,24 @@ router.get('/teamStats/:userID/:sortOn',(req,res,next)=>{
     sorted = {$match:{'games.ended':true,'games.venue':'Borta'}};
   }
   Assistant.aggregate([
-  {$match:{'username':req.params.userID}},
+  {$match:{'_id':mongoose.Types.ObjectId(res.locals.decoded.sub)}},
   {$project:{club:1,games:1}},
   {$unwind:'$games'},
   sorted,
   {$project:{club:1,'games.goals':1,'games.shots':1,'games.corners':1,'games.yellow':1,'games.red':1}},
-  {$group:{_id:'statsForTeam',count:{$sum:1},club:{$first:'$club'},totalGoalsFor:{$sum:'$games.goals.for'},totalGoalsAgainst:{$sum:'$games.goals.against'},totalShotsFor:{$sum:'$games.shots.for'},totalShotsAgainst:{$sum:'$games.shots.against'},avgGoalsFor:{$avg:'$games.goals.for'},avgGoalsAgainst:{$avg:'$games.goals.against'},avgShotsFor:{$avg:'$games.shots.for'},avgShotsAgainst:{$avg:'$games.shots.against'},avgCornerFor:{$avg:'$games.corners.for'},avgCornerAgainst:{$avg:'$games.corners.against'},avgYellowFor:{$avg:'$games.yellow.for'},avgRedFor:{$avg:'$games.red.for'}}},
-  {$project:{club:1,count:1,totalGoalsFor:1,totalGoalsAgainst:1,avgGoalsFor:1,avgGoalsAgainst:1,avgShotsFor:1,avgShotsAgainst:1,avgCornerFor:1,avgCornerAgainst:1,avgYellowFor:1,avgRedFor:1,shotConversionFor:{$cond:[{$eq:[ '$totalShotsFor', 0 ]},0,{$divide:['$totalGoalsFor', '$totalShotsFor']}]},shotConversionAgainst:{$cond:[{$eq:[ '$totalShotsAgainst', 0 ]},0,{$divide:['$totalGoalsAgainst', '$totalShotsAgainst']}]}}}
+  {$group:{_id:'statsForTeam',wins:{$sum:{$cond:[{$gt:['$games.goals.for','$games.goals.against']},1,0]}},losses:{$sum:{$cond:[{$lt:['$games.goals.for','$games.goals.against']},1,0]}},draws:{$sum:{$cond:[{$eq:['$games.goals.for','$games.goals.against']},1,0]}},count:{$sum:1},club:{$first:'$club'},totalGoalsFor:{$sum:'$games.goals.for'},totalGoalsAgainst:{$sum:'$games.goals.against'},totalShotsFor:{$sum:'$games.shots.for'},totalShotsAgainst:{$sum:'$games.shots.against'},avgGoalsFor:{$avg:'$games.goals.for'},avgGoalsAgainst:{$avg:'$games.goals.against'},avgShotsFor:{$avg:'$games.shots.for'},avgShotsAgainst:{$avg:'$games.shots.against'},avgCornerFor:{$avg:'$games.corners.for'},avgCornerAgainst:{$avg:'$games.corners.against'},avgYellowFor:{$avg:'$games.yellow.for'},avgRedFor:{$avg:'$games.red.for'}}},
+  {$project:{club:1,wins:1,losses:1,draws:1,count:1,totalGoalsFor:1,totalGoalsAgainst:1,avgGoalsFor:1,avgGoalsAgainst:1,avgShotsFor:1,avgShotsAgainst:1,avgCornerFor:1,avgCornerAgainst:1,avgYellowFor:1,avgRedFor:1,shotConversionFor:{$cond:[{$eq:[ '$totalShotsFor', 0 ]},0,{$divide:['$totalGoalsFor', '$totalShotsFor']}]},shotConversionAgainst:{$cond:[{$eq:[ '$totalShotsAgainst', 0 ]},0,{$divide:['$totalGoalsAgainst', '$totalShotsAgainst']}]}}}
   ]).exec()
-    .then( team => res.status(200).json({success:true,team:team}))
+    .then( team => {
+      Assistant.aggregate([
+        {$match:{'_id':mongoose.Types.ObjectId(res.locals.decoded.sub)}},
+        {$project:{trainings:1}},
+        {$unwind:'$trainings'},
+        {$group:{_id:'trainings',avgAttendance:{$avg:'$trainings.attendance'}}}
+      ]).exec()
+      .then( training => res.status(200).json({success:true,team,training}))
+      .catch( err => res.status(500).json({success:false,message: err.message}));
+    })
     .catch( err => res.status(500).json({success:false,message: err.message}));
 });
 

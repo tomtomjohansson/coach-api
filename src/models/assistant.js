@@ -13,7 +13,16 @@ const playerSchema = new mongoose.Schema({
 
 const trainingSchema = new mongoose.Schema({
   date: Date,
-  attending: [String]
+  attending: [String],
+  attendance: Number
+});
+
+const eventSchema = new mongoose.Schema({
+  type:String,
+  team:String,
+  player:String,
+  assPlayer:String,
+  minute:Number
 });
 
 // Schema for subdocuments. Instances created when users add games.
@@ -22,6 +31,7 @@ const gameSchema = new mongoose.Schema({
   date: Date,
   venue: String,
   ended: {type:Boolean,'default':false},
+  events: [eventSchema],
   goals: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
   shots: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
   corners: {for:{type:Number,'default':0},against:{type:Number,'default':0}},
