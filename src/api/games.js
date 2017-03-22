@@ -30,7 +30,14 @@ router.post('/',(req,res,next)=>{
 router.put('/',(req,res,next)=>{
   req.body.game.ended = true;
   req.body.game.players.forEach( player => {
-    player.minutes.total = player.minutes.out - player.minutes.in;
+    if (player.minutes.played.length > 0) {
+      if (player.position !== 'BENCH') {
+        player.minutes.played.push(90);
+      }
+      for (let i = 0; i < player.minutes.played.length; i += 2) {
+        player.minutes.total += (player.minutes.played[i + 1] - player.minutes.played[i]);
+      }
+    }
   });
   res.locals.message = 'Matchen sparades som avslutad';
   next();
@@ -43,18 +50,27 @@ router.put('/sub',(req,res,next) => {
       return res.status(500).json({success:false,message:errors[0].msg});
     }
   const {game,playerIn,playerOut,minute} = req.body;
-  game.players.push(playerIn);
-  game.players[game.players.length - 1].minutes = {in:minute,total:0,out:90};
+  const enteringPlayer = game.players.find( player => player._id === playerIn);
   const subbedPlayer = game.players.find( player => player._id === playerOut);
-  subbedPlayer.minutes.out = minute;
+  subbedPlayer.minutes.played.push(minute);
+  enteringPlayer.minutes.played.push(minute);
+  enteringPlayer.position = subbedPlayer.position;
+  subbedPlayer.position = 'BENCH';
   res.locals.message = 'Bytet genomfördes';
   next();
 });
 
 router.put('/eleven',(req,res,next) => {
-  req.body.game.players = req.body.eleven;
-  req.body.game.players.forEach(player => {
-    player.minutes = {in:0,total:0,out:90};
+  console.log(req.body.eleven);
+  req.body.game.players = [...req.body.eleven,...req.body.bench];
+   req.body.game.players.forEach(player => {
+    player.minutes = {
+      played: [],
+      total: 0
+    };
+    if (player.position !== 'BENCH') {
+      player.minutes.played.push(0);
+    }
   });
   res.locals.message = 'Startelvan sparades';
   next();
