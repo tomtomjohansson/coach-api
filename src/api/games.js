@@ -31,7 +31,7 @@ router.put('/',(req,res,next)=>{
   req.body.game.ended = true;
   req.body.game.players.forEach( player => {
     if (player.minutes.played.length > 0) {
-      if (player.position !== 'BENCH') {
+      if (player.minutes.played.length % 2 !== 0) {
         player.minutes.played.push(90);
       }
       for (let i = 0; i < player.minutes.played.length; i += 2) {
@@ -54,14 +54,13 @@ router.put('/sub',(req,res,next) => {
   const subbedPlayer = game.players.find( player => player._id === playerOut);
   subbedPlayer.minutes.played.push(minute);
   enteringPlayer.minutes.played.push(minute);
-  enteringPlayer.position = subbedPlayer.position;
-  subbedPlayer.position = 'BENCH';
+  // enteringPlayer.position = subbedPlayer.position;
+  // subbedPlayer.position = 'BENCH';
   res.locals.message = 'Bytet genomfördes';
   next();
 });
 
 router.put('/eleven',(req,res,next) => {
-  console.log(req.body.eleven);
   req.body.game.players = [...req.body.eleven,...req.body.bench];
    req.body.game.players.forEach(player => {
     player.minutes = {
@@ -93,7 +92,7 @@ router.delete('/:id',(req,res,next)=>{
   let id = req.params.id;
   let deleteItem = {$pull:{games:{_id: id}}};
   const option = {new:true,select:{games:1}};
-  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem).lean().exec()
+  Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem,option).lean().exec()
     .then( user => res.status(200).json({success: true, message:'Deleted game'}))
     .catch( err => res.status(500).json({success:false, message: err.message}));
 });
