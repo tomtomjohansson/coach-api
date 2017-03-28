@@ -71,6 +71,7 @@ router.put('/eleven',(req,res,next) => {
       player.minutes.played.push(0);
     }
   });
+  req.body.game.formation = req.body.formation;
   res.locals.message = 'Startelvan sparades';
   next();
 });
