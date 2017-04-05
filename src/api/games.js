@@ -7,7 +7,7 @@ const {addGameSchema, substitutionSchema} = require('../validation/userValidatio
 
 // Gets all the games for specific user.
 router.get('/', (req,res,next) => {
-  Assistant.findById('58a5a255f56e33047e5922ff',{},{select:{games:1}}).lean().exec()
+  Assistant.findById(res.loacals.decoded.sub,{},{select:{games:1}}).lean().exec()
     .then( user => res.status(200).json({success: true, games:user.games}))
     .catch( err => res.status(500).json({success: false, message: err.message}));
 });
