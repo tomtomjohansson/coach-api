@@ -2,7 +2,7 @@
 // Express/environment dependencies
 const express = require('express');
 const app = express();
-require('dotenv').config();
+process.env.NODE_ENV !== 'production' && require('dotenv').config();
 const path = require('path');
 const parser = require('body-parser');
 const validator = require('express-validator');

@@ -29,8 +29,8 @@ router.post('/',(req,res,next)=>{
 router.put('/',(req,res,next)=>{
   req.body.training.attending = req.body.attending;
   req.body.training.attendance = req.body.attendance;
-  let find = {'trainings._id':mongoose.Types.ObjectId(req.body.training._id)};
-  let update = {$set:{'trainings.$':req.body.training, lastUpdate:Date.now()}};
+  const find = {'trainings._id':mongoose.Types.ObjectId(req.body.training._id)};
+  const update = {$set:{'trainings.$':req.body.training, lastUpdate:Date.now()}};
   const option = {new:true,select:{trainings:1}};
   Assistant.findOneAndUpdate(find,update,option).lean().exec()
     .then( user => {
@@ -42,8 +42,7 @@ router.put('/',(req,res,next)=>{
 
 // Deletes subdocument of training.
 router.delete('/:id',(req,res,next)=>{
-  let id = req.params.id;
-  let deleteItem = {$pull:{trainings:{_id: id}}};
+  const deleteItem = {$pull:{trainings:{_id: req.params.id}}};
   const option = {new:true,select:{trainings:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem,option).lean().exec()
     .then( user => res.status(200).json({success: true, message:'Träningen raderades'}))

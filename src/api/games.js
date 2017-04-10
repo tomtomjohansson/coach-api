@@ -54,8 +54,6 @@ router.put('/sub',(req,res,next) => {
   const subbedPlayer = game.players.find( player => player._id === playerOut);
   subbedPlayer.minutes.played.push(minute);
   enteringPlayer.minutes.played.push(minute);
-  // enteringPlayer.position = subbedPlayer.position;
-  // subbedPlayer.position = 'BENCH';
   res.locals.message = 'Bytet genomfördes';
   next();
 });
@@ -90,8 +88,7 @@ router.put('*', (req,res,next) => {
 
 // Deletes a subdocument with game for specific user.
 router.delete('/:id',(req,res,next)=>{
-  let id = req.params.id;
-  let deleteItem = {$pull:{games:{_id: id}}};
+  const deleteItem = {$pull:{games:{_id: req.params.id}}};
   const option = {new:true,select:{games:1}};
   Assistant.findByIdAndUpdate(res.locals.decoded.sub,deleteItem,option).lean().exec()
     .then( user => res.status(200).json({success: true, message:'Deleted game'}))
