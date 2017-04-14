@@ -34,7 +34,7 @@ LoginSchema.static('canAuthenticate', async function (key) {
     return true;
   }
 
-  const timeout = ( new Date() - login.timeout.setTime(login.timeout.getTime() + 1000 * 60) );
+  const timeout = ( new Date() - login.timeout.setTime(login.timeout.getTime() + 60 * 60 * 1000) );
   if (timeout >= 0) {
     await login.remove();
     return true;

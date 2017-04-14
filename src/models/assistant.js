@@ -77,11 +77,11 @@ AssistantSchema.methods.validPassword = function(password) {
 AssistantSchema.methods.generateJWT = function() {
   const today = new Date();
   const exp = new Date(today);
-  exp.setDate(today.getDate() + 365);
+  exp.setDate(today.getDate() + 730);
   return jwt.sign({
     sub: this._id,
     exp: parseInt(exp.getTime() / 1000, 10),
-    iss: 'LikeAPro'
+    iss: 'Lagkollen'
   }, process.env.SECRET);
 };
 

@@ -81,7 +81,7 @@ router.post('/login', (req,res,next) => {
 
 router.post('/login', (req,res,next) => {
   Login.canAuthenticate(res.locals.identityKey)
-    .then( isNotLocked => isNotLocked ? next() : res.locals.delayResponse(() => res.status(500).json({success:false,message:'Kontot är låst efter för många felaktiga försök att logga in. Var god försök igen senare.'})))
+    .then( isNotLocked => isNotLocked ? next() : res.locals.delayResponse(() => res.status(500).json({success:false,message:'Kontot är låst i 60 minuter efter för många felaktiga försök att logga in.'})))
     .catch( err => next(err));
 });
 
